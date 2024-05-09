@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:temp_app/home.dart';
+import 'package:temp_app/quizpage.dart';
+import 'package:temp_app/result_page.dart';
 
 void main() {
   runApp(const MyApp());
@@ -10,9 +12,14 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const MaterialApp(
+    return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: Home(),
+      home: const Home(),
+      routes: {
+        Home.routeName: (context) => const Home(),
+        Quiz.routeName: (context) => const Quiz(),
+        ResultPage.routeName: (context) => const ResultPage(),
+      },
     );
   }
 }

@@ -1,9 +1,13 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
+import 'package:temp_app/firebase_options.dart';
 import 'package:temp_app/home.dart';
-import 'package:temp_app/quizpage.dart';
-import 'package:temp_app/result_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
   runApp(const MyApp());
 }
 
@@ -14,12 +18,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const Home(),
-      routes: {
-        Home.routeName: (context) => const Home(),
-        Quiz.routeName: (context) => const Quiz(),
-        ResultPage.routeName: (context) => const ResultPage(),
-      },
+      home: TodoListScreen(),
     );
   }
 }

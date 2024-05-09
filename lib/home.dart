@@ -1,117 +1,117 @@
+import 'dart:developer';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:temp_app/quizpage.dart';
 
-class Home extends StatefulWidget {
-  static const routeName = "/home";
-  const Home({super.key});
-
-  @override
-  State<Home> createState() => _HomeState();
+class Todo {
+  String title;
+  bool isDone;
+  Todo(this.title, {this.isDone = false});
 }
 
-class _HomeState extends State<Home> {
-  List<dynamic> categories = [
-    {
-      "title": "physics",
-      "image": "categories[index]['tite']",
-    },
-    {
-      "title": "chemistry",
-      "image": "categories[index]['tite']",
-    },
-    {
-      "title": "maths",
-      "image": "categories[index]['tite']",
-    },
-    {
-      "title": "biology",
-      "image": "categories[index]['tite']",
-    },
-  ];
+class TodoListScreen extends StatefulWidget {
+  @override
+  _TodoListScreenState createState() => _TodoListScreenState();
+}
+
+class _TodoListScreenState extends State<TodoListScreen> {
+  var ref = FirebaseFirestore.instance.collection("todos");
+
+  List<Todo> todos = [];
+
+  // ToggleTodoCallback onTodoToggle;
+
+  void fetchTodos() async {
+    var getQ = await ref.get(GetOptions(source: Source.server));
+
+    for (var i in getQ.docs) {
+      var d = i.data();
+      todos.add(Todo(d['title'], isDone: d['isDone']));
+    }
+    setState(() {
+      inspect(todos);
+    });
+  }
+
+  _toggleTodo(Todo todo, bool? isChecked) {
+    setState(() {
+      todo.isDone = isChecked == true;
+    });
+  }
+
+  _addTodo() async {
+    final todo = await showDialog<Todo>(
+      context: context,
+      builder: (BuildContext context) {
+        return newTodo(context);
+      },
+    );
+
+    if (todo != null) {
+      setState(() {
+        todos.add(todo);
+
+        ref.add({"title": todo.title, "isDone": todo.isDone});
+      });
+    }
+  }
+
+  Widget _buildItem(BuildContext context, int index) {
+    final todo = todos[index];
+
+    return CheckboxListTile(
+      value: todo.isDone,
+      title: Text(todo.title),
+      onChanged: (bool? isChecked) {
+        _toggleTodo(todo, isChecked);
+      },
+    );
+  }
+
+  Widget buildTodoList(BuildContext context) {
+    return ListView.builder(
+      itemBuilder: _buildItem,
+      itemCount: todos.length,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.purple,
-      body: Column(
-        children: [
-          const SizedBox(
-            height: 30,
-          ),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                "Quizz App",
-                style: TextStyle(fontSize: 30, color: Colors.white),
-              ),
-            ],
-          ),
-          const SizedBox(
-            height: 20,
-          ),
-          Expanded(
-            child: Container(
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.only(
-                    topLeft: Radius.circular(14),
-                    topRight: Radius.circular(14)),
-              ),
-              child: Column(children: [
-                Expanded(
-                  child: ListView.separated(
-                    separatorBuilder: (context, index) => SizedBox(
-                      height: 20,
-                    ),
-                    itemBuilder: (context, index) =>
-                        catagory(categories[index]['title'], () {
-                      Navigator.of(context).pushNamed(Quiz.routeName);
-                    }),
-                    itemCount: 4,
-                  ),
-                ),
-              ]),
-            ),
-          ),
-        ],
+      appBar: AppBar(title: Text('Todo List')),
+      body: buildTodoList(context),
+      floatingActionButton: FloatingActionButton(
+        child: Icon(Icons.add),
+        onPressed: _addTodo,
       ),
     );
   }
+}
 
-  catagory(String text, VoidCallback ontap) {
-    return InkWell(
-      onTap: ontap,
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            boxShadow: [
-              const BoxShadow(
-                color: Color.fromRGBO(0, 0, 0, 0.15),
-                offset: Offset(1.95, 1.95),
-                blurRadius: 2.6,
-              ),
-            ],
-          ),
-          child: ListTile(
-            leading: Container(
-              height: 50,
-              width: 50,
-              decoration: BoxDecoration(
-                color: Colors.black,
-                borderRadius: BorderRadius.circular(14),
-              ),
-            ),
-            title: Text(
-              text,
-              style: TextStyle(fontSize: 20),
-            ),
-          ),
-        ),
+Widget newTodo(BuildContext context) {
+  final controller = TextEditingController();
+  return AlertDialog(
+    title: Text('New todo'),
+    content: TextField(
+      controller: controller,
+      autofocus: true,
+    ),
+    actions: <Widget>[
+      TextButton(
+        child: Text('Cancel'),
+        onPressed: () {
+          Navigator.of(context).pop();
+        },
       ),
-    );
-  }
+      TextButton(
+        child: Text('Add'),
+        onPressed: () {
+          final todo = Todo(controller.value.text);
+          controller.clear();
+
+          Navigator.of(context).pop(todo);
+        },
+      ),
+    ],
+  );
 }
